@@ -1,0 +1,6 @@
+/.vscode/
+__pycache__/
+/RelabDatabase2020Dec31/
+*.pyc
+
+/generated_images*/
