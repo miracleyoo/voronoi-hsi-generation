@@ -56,8 +56,6 @@ def preprocess_material_response(df, n=5, start=300, limit=3000, start_threshold
 
     # Here we make sure that the steps of the wevelength are of step n
     df2 = resample(df, n)
-    # print(n, start, limit, start_threshold)
-    # print(df2)
 
     # To reduce runtime, we can limit the range we are evaluating to
     # This limit should be set so it is the same as the limit of the camera response function
@@ -108,7 +106,6 @@ def get_weighted_sum(material_df, camera_df, band_name):
 
 
 # Gets weighted sum from processed material and camera dataframe
-
 def get_weighted_sums_from_df(material_df, camera_df, highlight_missing=False):
     weighted_sums = []
     for band_name in camera_df.columns:
@@ -166,9 +163,8 @@ def get_random_weighted_sums(n=25, pkl='success.pkl', dim=None):
 def reshape_array(arr, h, w):
     return np.array(arr).reshape((h, w))
 
+
 # Growing Algorithm Helper Functions
-
-
 def voronoi(width, height, num_cells, materials_array, band_num=13):
     """
     Generates a voronoi diagaram with num_cells patches using materials from materials array

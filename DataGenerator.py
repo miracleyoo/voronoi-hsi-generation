@@ -46,7 +46,6 @@ class DataGenerator:
                 rand_num_cells = random.randrange(min_num_cells, max_num_cells)
                 rand_num_materials = random.randrange(
                     min_num_materials, max_num_materials)
-                # fn = f'{self.dirs}/{template}_{i}.tiff'
                 fn = os.path.join(self.dir, f'{template}_{i}.tiff')
                 self.synth.generate_voronoi(
                     im_size[0], im_size[1], rand_num_cells, rand_num_materials, filename=fn, sample_random=True)
@@ -120,7 +119,6 @@ class DataGenerator:
                     cur_rate = int(math.pow(2, s))
                     print('cur_rate:', cur_rate, 'D:', D)
                     fn = os.path.join(full_path, f'{D[cur_rate]}x.{ext}')
-                    # print(f'Sampling down {cur_rate}x...')
                     if cur_rate == 1:
                         try:
                             self.synth.generate_voronoi(
@@ -142,8 +140,6 @@ class DataGenerator:
                 i += 1
 
 
-# Usage
-
 # scf = {
 #     'start_wavelength':300,
 #     'end_wavelength':3000,
@@ -156,6 +152,7 @@ class DataGenerator:
 # NUM_IMG = 10000
 # DIRS = '/Volumes/Bima Seagate/generated_images'
 
+# Usage
 scf = {
     'step': 1,
     'start_wavelength': 388,
