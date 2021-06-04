@@ -141,6 +141,7 @@ class DataGenerator:
 
 
 # scf = {
+#     'step':5,
 #     'start_wavelength':300,
 #     'end_wavelength':3000,
 #     'start_threshold':250,
@@ -148,9 +149,9 @@ class DataGenerator:
 #     'ignore_limits':True
 # }
 
-# camera_df = pd.read_pickle('normalized_df.pkl')
-# NUM_IMG = 10000
-# DIRS = '/Volumes/Bima Seagate/generated_images'
+# camera_df = pd.read_pickle('ref/sen_norm_df.pkl') #ideal_norm_df
+# NUM_IMG = 10
+# DIRS = 'generated_images'
 
 # Usage
 scf = {
@@ -163,7 +164,7 @@ scf = {
 }
 
 camera_df = pd.read_pickle('ref/ideal_norm_df.pkl')
-NUM_IMG = 1000
+NUM_IMG = 10
 DIRS = 'generated_images'
 
 

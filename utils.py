@@ -32,12 +32,13 @@ def resample(df: pd.DataFrame, n=5):
     """
     Resample data to be n steps
     """
-    # df2 = df.groupby(df.index // n).mean()
-    # df2.index *= n
+    # df_resampled = df.groupby(df.index // n).mean()
+    # df_resampled.index *= n
 
     Xresampled = np.arange(df.first_valid_index(), df.last_valid_index()+n, n)
     df_resampled = df.reindex(df.index.union(
         Xresampled)).interpolate('values').loc[Xresampled]
+    # print(df_resampled.head())
     return df_resampled
 
 
