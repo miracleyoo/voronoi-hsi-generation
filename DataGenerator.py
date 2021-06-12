@@ -5,6 +5,8 @@ import random
 import os
 import math
 from pathlib import Path
+import utils
+from mlib import mio
 
 D = {
     1: 64,
@@ -18,9 +20,9 @@ D = {
 
 
 class DataGenerator:
-    def __init__(self, n, camera_function: pd.DataFrame, dirs='generated_images', synth_config={}):
+    def __init__(self, n, camera_function: pd.DataFrame, dirs='generated_images', synth_config={}, band_num=None):
         self.n = n
-        self.synth = Synthesizer(camera_function, config=synth_config)
+        self.synth = Synthesizer(camera_function, config=synth_config, band_num=band_num)
         self.dirs = dirs
         self.selection_file = 'ref/success.pkl'
 
@@ -57,7 +59,8 @@ class DataGenerator:
                                                                                             'max_num_cells': 40,
                                                                                             'min_num_materials': 10,
                                                                                             'max_num_materials': 25,
-                                                                                            'ext': 'npy'
+                                                                                            'ext': 'npy',
+                                                                                            'template_file': ''
     }):
         """
 
@@ -86,6 +89,23 @@ class DataGenerator:
 
         i = start
 
+        try:
+            # Get function parameters from config
+            min_num_cells = config['min_num_cells']
+            max_num_cells = config['max_num_cells']
+            min_num_materials = config['min_num_materials']
+            max_num_materials = config['max_num_materials']
+            ext = config['ext']
+            template_file = config['template_file']
+        except KeyError as e:
+            print(f'KeyError: {str(e)}')
+
+        if template_file != '':
+            print(template_file)
+            temp_img = mio.load(template_file)
+            temp_img = utils.get_new_dim_img(temp_img)
+            materials_array_total = utils.get_main_color(temp_img, k=max_num_materials)
+
         while i < self.n + start:
 
             value_err = False
@@ -100,16 +120,6 @@ class DataGenerator:
                 Path(full_path).mkdir(parents=True,
                                       exist_ok=True)  # python 3.5 above
 
-                try:
-                    # Get function parameters from config
-                    min_num_cells = config['min_num_cells']
-                    max_num_cells = config['max_num_cells']
-                    min_num_materials = config['min_num_materials']
-                    max_num_materials = config['max_num_materials']
-                    ext = config['ext']
-                except KeyError as e:
-                    print(f'KeyError: {str(e)}')
-
                 # Use random to generate the parameter passed into the functions
                 rand_num_cells = random.randrange(min_num_cells, max_num_cells)
                 rand_num_materials = random.randrange(
@@ -121,8 +131,13 @@ class DataGenerator:
                     fn = os.path.join(full_path, f'{D[cur_rate]}x.{ext}')
                     if cur_rate == 1:
                         try:
-                            self.synth.generate_voronoi(
-                                im_size[0], im_size[1], rand_num_cells, rand_num_materials, filename=fn, sample_random=True)
+                            if template_file == '':
+                                self.synth.generate_voronoi(
+                                    im_size[0], im_size[1], rand_num_cells, rand_num_materials, filename=fn, sample_random=True)
+                            else:
+                                materials_array = random.sample(materials_array_total, rand_num_materials)
+                                self.synth.generate_voronoi(
+                                    im_size[0], im_size[1], rand_num_cells, rand_num_materials, materials_array=materials_array, filename=fn, sample_random=False)
                         except ValueError as e:
                             print(f'ValueERR: {str(e)} Retrying...')
                             value_err = True
@@ -140,40 +155,58 @@ class DataGenerator:
                 i += 1
 
 
+# Sentinel-Simulation
 # scf = {
 #     'step':5,
 #     'start_wavelength':300,
 #     'end_wavelength':3000,
 #     'start_threshold':250,
 #     'end_threshold':1000,
-#     'ignore_limits':True
+#     'ignore_limits':True,
+#     'template_file':''
 # }
 
 # camera_df = pd.read_pickle('ref/sen_norm_df.pkl') #ideal_norm_df
 # NUM_IMG = 10
 # DIRS = 'generated_images'
 
-# Usage
+# Ideal-Simulation
+# scf = {
+#     'step': 1,
+#     'start_wavelength': 388,
+#     'end_wavelength': 1013,
+#     'start_threshold': 250,
+#     'end_threshold': 1000,
+#     'ignore_limits': True,
+#     'template_file':''
+# }
+
+# camera_df = pd.read_pickle('ref/ideal_norm_df.pkl')
+# NUM_IMG = 10
+# DIRS = 'generated_images'
+
+# Sentinel-Template-Simulation
 scf = {
-    'step': 1,
-    'start_wavelength': 388,
-    'end_wavelength': 1013,
+    'step': 5,
+    'start_wavelength': 300,
+    'end_wavelength': 3000,
     'start_threshold': 250,
     'end_threshold': 1000,
     'ignore_limits': True
 }
 
-camera_df = pd.read_pickle('ref/ideal_norm_df.pkl')
-NUM_IMG = 10
-DIRS = 'generated_images'
+camera_df = pd.read_pickle('ref/sen_norm_df.pkl')
+NUM_IMG = 100
+DIRS = r'L:\Satellite\synthetic_sentinel_real'
 
 
-dg = DataGenerator(NUM_IMG, camera_df, dirs=DIRS, synth_config=scf)
+dg = DataGenerator(NUM_IMG, camera_df, dirs=DIRS, synth_config=scf, band_num=12)
 
 dg.generator_sampling((1024, 1024), img_type='voronoi', template='voronoi1024', sampling_times=6, start=1, config={
     'min_num_cells': 80,
     'max_num_cells': 100,
     'min_num_materials': 10,
     'max_num_materials': 25,
-    'ext': 'pkl'
+    'ext': 'pkl',
+    'template_file': r'L:\Satellite\paired_dl_data\chand1\sentinel\roi.npy'
 })

@@ -12,14 +12,14 @@ class Synthesizer:
                  'end_wavelength':3000,
                  'start_threshold':250,
                  'end_threshold':1000,
-                 'ignore_limits':False}
-                 ):
+                 'ignore_limits':False},
+                 band_num=None):
 
         
         print(f'config: {config}')
         # Camera function
         self.camera_function = camera_function
-        self.band_num = len(self.camera_function.columns)
+        self.band_num = len(self.camera_function.columns) if band_num is None else band_num
 
         # Weighted sum configurations
         self.config = config
@@ -133,15 +133,17 @@ class Synthesizer:
     def imshow(self, bands=3):
         return
     
-    def generate_voronoi(self, width, height, num_cells,num_materials, materials_array=[], sample_random=False, save_img=True, filename='vor.tiff'):
+    def generate_voronoi(self, width, height, num_cells,num_materials, materials_array=[], sample_random=False, save_img=True, filename='vor.pkl', template_file=None):
         if len(materials_array) == 0 and sample_random == False:
             raise Warning('sample_random has to be True if materials_array is empty, proceeding with random sampling materials')
         
-        usage_materials_array = materials_array
         if sample_random:
+            usage_materials_array = materials_array
             usage_materials_array = self.generate_random_files(num_materials, selection_pickle=self.data_selection_pkl)
-
-        weighted_array = [utils.get_weighted_sums_from_txt_file(x, self.camera_function, config=self.config)[1] for x in usage_materials_array]
+            # This is the calculated value for pixels
+            weighted_array = [utils.get_weighted_sums_from_txt_file(x, self.camera_function, config=self.config)[1] for x in usage_materials_array]
+        else:
+            weighted_array = materials_array
 
         self.img_arr = utils.voronoi(width, height, num_cells, weighted_array, self.band_num)
         
