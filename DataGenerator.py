@@ -1,9 +1,11 @@
+from torch import preserve_format
 from Synthesizer import Synthesizer
 import pandas as pd
 from tqdm import trange
 import random
 import os
 import math
+import pickle as pkl
 from pathlib import Path
 import utils
 from mlib import mio
@@ -60,7 +62,8 @@ class DataGenerator:
                                                                                             'min_num_materials': 10,
                                                                                             'max_num_materials': 25,
                                                                                             'ext': 'npy',
-                                                                                            'template_file': ''
+                                                                                            'template_file': '',
+                                                                                            'pre_color_files':[]
     }):
         """
 
@@ -82,6 +85,7 @@ class DataGenerator:
         """
         # Add selection data pickle
         self.synth.set_selection_pickle(self.selection_file)
+        materials_array_total = []
 
         img_folder = template
         if len(template) == 0:
@@ -97,6 +101,7 @@ class DataGenerator:
             max_num_materials = config['max_num_materials']
             ext = config['ext']
             template_file = config['template_file']
+            pre_color_files = config['pre_color_files']
         except KeyError as e:
             print(f'KeyError: {str(e)}')
 
@@ -105,6 +110,14 @@ class DataGenerator:
             temp_img = mio.load(template_file)
             temp_img = utils.get_new_dim_img(temp_img)
             materials_array_total = utils.get_main_color(temp_img, k=max_num_materials)
+        elif pre_color_files != []:
+            if isinstance(pre_color_files, list):
+                for color_file in pre_color_files:
+                    with open(color_file, 'rb') as f:
+                        materials_array_total.extend(pkl.load(f))
+            elif isinstance(pre_color_files, str):
+                with open(pre_color_files, 'rb') as f:
+                    materials_array_total = pkl.load(f)
 
         while i < self.n + start:
 
@@ -131,7 +144,7 @@ class DataGenerator:
                     fn = os.path.join(full_path, f'{D[cur_rate]}x.{ext}')
                     if cur_rate == 1:
                         try:
-                            if template_file == '':
+                            if materials_array_total == []:
                                 self.synth.generate_voronoi(
                                     im_size[0], im_size[1], rand_num_cells, rand_num_materials, filename=fn, sample_random=True)
                             else:
@@ -155,7 +168,7 @@ class DataGenerator:
                 i += 1
 
 
-# Sentinel-Simulation
+## Sentinel-Simulation
 # scf = {
 #     'step':5,
 #     'start_wavelength':300,
@@ -170,7 +183,7 @@ class DataGenerator:
 # NUM_IMG = 10
 # DIRS = 'generated_images'
 
-# Ideal-Simulation
+## Ideal-Simulation
 # scf = {
 #     'step': 1,
 #     'start_wavelength': 388,
@@ -185,7 +198,34 @@ class DataGenerator:
 # NUM_IMG = 10
 # DIRS = 'generated_images'
 
-# Sentinel-Template-Simulation
+
+## Sentinel-Template-Simulation
+# scf = {
+#     'step': 5,
+#     'start_wavelength': 300,
+#     'end_wavelength': 3000,
+#     'start_threshold': 250,
+#     'end_threshold': 1000,
+#     'ignore_limits': True
+# }
+
+# camera_df = pd.read_pickle('ref/sen_norm_df.pkl')
+# NUM_IMG = 100
+# DIRS = r'L:\Satellite\synthetic_sentinel_real'
+
+
+# dg = DataGenerator(NUM_IMG, camera_df, dirs=DIRS, synth_config=scf, band_num=12)
+
+# dg.generator_sampling((1024, 1024), img_type='voronoi', template='voronoi1024', sampling_times=6, start=1, config={
+#     'min_num_cells': 80,
+#     'max_num_cells': 100,
+#     'min_num_materials': 10,
+#     'max_num_materials': 25,
+#     'ext': 'pkl',
+#     'template_file': r'L:\Satellite\paired_dl_data\chand1\sentinel\roi.npy'
+# })
+
+
 scf = {
     'step': 5,
     'start_wavelength': 300,
@@ -196,17 +236,28 @@ scf = {
 }
 
 camera_df = pd.read_pickle('ref/sen_norm_df.pkl')
-NUM_IMG = 100
-DIRS = r'L:\Satellite\synthetic_sentinel_real'
+NUM_IMG = 2000
+DIRS = r'L:\Satellite\synthetic_sentinel_mix_v2'
 
+os.makedirs(DIRS, exist_ok=True)
+dg = DataGenerator(NUM_IMG, camera_df, dirs=DIRS, synth_config=scf, band_num=31)
 
-dg = DataGenerator(NUM_IMG, camera_df, dirs=DIRS, synth_config=scf, band_num=12)
+# dg.generator_sampling((1024, 1024), img_type='voronoi', template='voronoi1024', sampling_times=6, start=1, config={
+#     'min_num_cells': 80,
+#     'max_num_cells': 100,
+#     'min_num_materials': 10,
+#     'max_num_materials': 25,
+#     'ext': 'pkl',
+#     'template_file': '',
+#     'pre_color_files': ['ref/ntire_colors_10per.pkl', 'ref/icvl_colors_10per.pkl']
+# })
 
 dg.generator_sampling((1024, 1024), img_type='voronoi', template='voronoi1024', sampling_times=6, start=1, config={
-    'min_num_cells': 80,
-    'max_num_cells': 100,
+    'min_num_cells': 50,
+    'max_num_cells': 250,
     'min_num_materials': 10,
-    'max_num_materials': 25,
+    'max_num_materials': 100,
     'ext': 'pkl',
-    'template_file': r'L:\Satellite\paired_dl_data\chand1\sentinel\roi.npy'
+    'template_file': '',
+    'pre_color_files': ['ref/ntire_colors_10per.pkl', 'ref/icvl_colors_10per.pkl']
 })
